@@ -41,6 +41,17 @@ def get_last_price(md):
     return last_price
     
 
+def get_bid(md):
+    """Returns the bid of the symbol."""
+    print("Consulting BID.")
+
+    if len(md["marketData"]["BI"]) < 1:
+        bid = None
+    else:
+        bid = md["marketData"]["BI"][0]["price"]
+
+    return bid
+
 
 def run():
     user = credentials.user
@@ -53,18 +64,23 @@ def run():
         md = get_marketdata(symbol)
 
         if md["status"] == "OK":
-            
+
             last_price = get_last_price(md)
             print(f"Last price: {last_price}")
+
+            bid = get_bid(md)
+
+            if bid == None:
+                print("No active BIDs.")
+                buy_order_price = 75.25
+            else:
+                print(f"BID price: {bid}")
+                buy_order_price = (bid-0.01)
+
 
         else:
             print("Invalid symbol.")
             return
-
-
-
-
-
 
     else:
         print("Closing.")
