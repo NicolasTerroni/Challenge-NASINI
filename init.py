@@ -15,9 +15,20 @@ def login(user, password, account):
     except:
         print("Failed to log in.")
         return False
-    print(f"Logged in as: {credentials.user}")
+    print(f"Logged in as: {user}")
     return True
 
+
+def get_marketdata(symbol):
+    """Gets the market data of an instrument"""
+
+    print(f"Getting MarketData from {str(symbol)}")
+    try:
+        md = pyRofex.get_market_data(ticker = symbol, entries = [pyRofex.MarketDataEntry.BIDS, pyRofex.MarketDataEntry.LAST])
+    except:
+        print("Invalid symbol.")
+        return
+    return md
 
 
 def run():
@@ -25,8 +36,11 @@ def run():
     password = credentials.password
     account = credentials.account
 
-    login(user, password, account)
-        #symbol = input("Input symbol: ")
+    if login(user, password, account):
+        symbol = input("Input symbol: ")
+
+        md = get_marketdata(symbol)
+
 
 
 
