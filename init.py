@@ -23,12 +23,23 @@ def get_marketdata(symbol):
     """Gets the market data of an instrument"""
 
     print(f"Getting MarketData from {str(symbol)}")
-    try:
-        md = pyRofex.get_market_data(ticker = symbol, entries = [pyRofex.MarketDataEntry.BIDS, pyRofex.MarketDataEntry.LAST])
-    except:
-        print("Invalid symbol.")
-        return
+
+    md = pyRofex.get_market_data(ticker = symbol, entries = [pyRofex.MarketDataEntry.BIDS, pyRofex.MarketDataEntry.LAST])
+
     return md
+
+
+
+def get_last_price(md):
+    """Returns the last price of the symbol."""
+
+    if md["marketData"]["LA"] == None:
+        last_price = None
+    else:
+        last_price = md["marketData"]["LA"]["price"]
+
+    return last_price
+    
 
 
 def run():
@@ -41,7 +52,23 @@ def run():
 
         md = get_marketdata(symbol)
 
+        if md["status"] == "OK":
+            
+            last_price = get_last_price(md)
+            print(f"Last price: {last_price}")
 
+        else:
+            print("Invalid symbol.")
+            return
+
+
+
+
+
+
+    else:
+        print("Closing.")
+        return
 
 
 
