@@ -1,10 +1,12 @@
 """Main file"""
+
 # Debugger
 import pdb
 # pyRofex
 import pyRofex
 # Credentials
 import credentials
+
 
 def login(user, password, account):
     """Tries to login."""
@@ -27,7 +29,6 @@ def get_marketdata(symbol):
     md = pyRofex.get_market_data(ticker = symbol, entries = [pyRofex.MarketDataEntry.BIDS, pyRofex.MarketDataEntry.LAST])
 
     return md
-
 
 
 def get_last_price(md):
@@ -53,6 +54,23 @@ def get_bid(md):
     return bid
 
 
+def send_buy_order(symbol ,buy_order_price):
+    """Sends a buy order to the market"""
+    print(f"Sending a buy order at: ${buy_order_price}")
+
+    try:
+        order = pyRofex.send_order(ticker=symbol,
+                            side=pyRofex.Side.BUY,
+                            size=1,
+                            price=buy_order_price,
+                            order_type=pyRofex.OrderType.LIMIT)
+    except:
+        print("Could not send the buy order.")
+        return
+
+    return order
+
+
 def run():
     user = credentials.user
     password = credentials.password
@@ -64,18 +82,23 @@ def run():
         md = get_marketdata(symbol)
 
         if md["status"] == "OK":
-
+            # LP
             last_price = get_last_price(md)
             print(f"Last price: {last_price}")
 
+            # BID
             bid = get_bid(md)
-
             if bid == None:
                 print("No active BIDs.")
                 buy_order_price = 75.25
             else:
                 print(f"BID price: {bid}")
                 buy_order_price = (bid-0.01)
+
+            # BUY ORDER
+            order = send_buy_order(symbol, buy_order_price)
+            pdb.set_trace()
+
 
 
         else:
