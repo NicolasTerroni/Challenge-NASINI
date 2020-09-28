@@ -14,13 +14,16 @@ def login(user, password, account):
 
     print("Logging in reMarkets..")
     try:
-        pyRofex.initialize(user, password, account, pyRofex.Environment.REMARKET)
+        pyRofex.initialize(user=user,
+                   password=password,
+                   account=account,
+                   environment=pyRofex.Environment.REMARKET)
     except:
         print("""
 Failed to log in.
-Checkout your 2 parameters and run:
-python init.py -u <user> -p <password>
-Put your username or password in quotes if they have a special character.
+Checkout your parameters and run:
+python init.py -s <symbol> -u <user> -p <password>
+Put your params in quotes if they have a special character.
 """)
         return False
     print(f"Logged in as: {user}")
@@ -70,12 +73,12 @@ def send_buy_order(symbol ,buy_order_price):
 
     try:
         order = pyRofex.send_order(ticker=symbol,
-                            side=pyRofex.Side.BUY,
-                            size=1,
-                            price=buy_order_price,
-                            order_type=pyRofex.OrderType.LIMIT)
+                           side=pyRofex.Side.BUY,
+                           size=1,
+                           price=buy_order_price,
+                           order_type=pyRofex.OrderType.LIMIT)
     except:
-        print("Could not send the buy order.")
+        print("Could not send the buy order. Check if the account is correct.")
         return
 
     return order
@@ -83,34 +86,40 @@ def send_buy_order(symbol ,buy_order_price):
 
 def logout():
     print("Loggin out reMarkets.")
+    sys.exit()
 
 
 def run():
     user = None
     password = None
-    account = None
+    account = 'REM5049'
 
     argv = sys.argv[1:]
     # sys.argv[0] is the file's name.
 
     try:
-        opts, args = getopt.getopt(argv, "u:p:")
+        opts, args = getopt.getopt(argv, "s:u:p:") #falta a:
         # converts the params list in a list of tuples
-    except:
-        print("""Failed to run. Use: python init.py -u <user> -p <password>
-Put your username or password in quotes if they have a special character.""")
+    except getopt.GetoptError as err:
+        print("""Failed to run. Use: python init.py -s <symbol> -u <user> -p <password>
+Put your params in quotes if they have a special character.""")
         sys.exit()
 
 
     for opt, arg in opts:
-        if opt == "-u":
+        if opt == "-s":
+            symbol = arg
+        elif opt == "-u":
             user = arg
         elif opt == "-p":
             password = arg
+        """elif opt == "-a":
+            account == arg"""
 
+
+    
 
     if login(user, password, account):
-        symbol = input("Input symbol: ")
 
         md = get_marketdata(symbol)
 
@@ -131,6 +140,7 @@ Put your username or password in quotes if they have a special character.""")
 
             # BUY ORDER
             order = send_buy_order(symbol, buy_order_price)
+            pdb.set_trace()
 
             logout()
 
