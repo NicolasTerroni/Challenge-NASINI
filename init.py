@@ -1,21 +1,27 @@
 """Main file"""
 
-# Debugger
+# python
+import sys
+import getopt
 import pdb
 # pyRofex
 import pyRofex
-# Credentials
-import credentials
+
 
 
 def login(user, password, account):
     """Tries to login."""
 
-    print("Logging in reMarkets.")
+    print("Logging in reMarkets..")
     try:
         pyRofex.initialize(user, password, account, pyRofex.Environment.REMARKET)
     except:
-        print("Failed to log in.")
+        print("""
+Failed to log in.
+Checkout your 2 parameters and run:
+python init.py -u <user> -p <password>
+Put your username or password in quotes if they have a special character.
+""")
         return False
     print(f"Logged in as: {user}")
     return True
@@ -24,9 +30,13 @@ def login(user, password, account):
 def get_marketdata(symbol):
     """Gets the market data of an instrument"""
 
-    print(f"Getting MarketData from {str(symbol)}")
+    print(f"Getting MarketData from '{str(symbol)}'")
 
-    md = pyRofex.get_market_data(ticker = symbol, entries = [pyRofex.MarketDataEntry.BIDS, pyRofex.MarketDataEntry.LAST])
+    md = pyRofex.get_market_data(
+        ticker = symbol, 
+        entries = [
+            pyRofex.MarketDataEntry.BIDS, 
+            pyRofex.MarketDataEntry.LAST])
 
     return md
 
@@ -72,9 +82,28 @@ def send_buy_order(symbol ,buy_order_price):
 
 
 def run():
-    user = credentials.user
-    password = credentials.password
-    account = credentials.account
+    user = None
+    password = None
+    account = None
+
+    argv = sys.argv[1:]
+    # sys.argv[0] is the file's name.
+
+    try:
+        opts, args = getopt.getopt(argv, "u:p:")
+        # converts the params list in a list of tuples
+    except:
+        print("""Failed to run. Use: python init.py -u <user> -p <password>
+Put your username or password in quotes if they have a special character.""")
+        sys.exit()
+
+
+    for opt, arg in opts:
+        if opt == "-u":
+            user = arg
+        elif opt == "-p":
+            password = arg
+
 
     if login(user, password, account):
         symbol = input("Input symbol: ")
@@ -97,7 +126,6 @@ def run():
 
             # BUY ORDER
             order = send_buy_order(symbol, buy_order_price)
-            pdb.set_trace()
 
 
 
