@@ -81,6 +81,10 @@ def send_buy_order(symbol ,buy_order_price):
     return order
 
 
+def logout():
+    print("Loggin out reMarkets.")
+
+
 def run():
     user = None
     password = None
@@ -111,6 +115,7 @@ Put your username or password in quotes if they have a special character.""")
         md = get_marketdata(symbol)
 
         if md["status"] == "OK":
+
             # LP
             last_price = get_last_price(md)
             print(f"Last price: {last_price}")
@@ -127,16 +132,14 @@ Put your username or password in quotes if they have a special character.""")
             # BUY ORDER
             order = send_buy_order(symbol, buy_order_price)
 
-
+            logout()
 
         else:
             print("Invalid symbol.")
-            return
+            logout()
 
     else:
         print("Closing.")
-        return
-
 
 
 if __name__ == "__main__":
