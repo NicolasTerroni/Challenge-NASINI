@@ -8,7 +8,6 @@ import pdb
 import pyRofex
 
 
-
 def login(user, password, account):
     """Tries to login."""
 
@@ -22,7 +21,7 @@ def login(user, password, account):
         print("""
 Failed to log in.
 Checkout your parameters and run:
-python init.py -s <symbol> -u <user> -p <password>
+python init.py <symbol> -u <user> -p <password>
 Put your params in quotes if they have a special character.
 """)
         return False
@@ -95,29 +94,27 @@ def run():
     account = 'REM5049'
 
     argv = sys.argv[1:]
-    # sys.argv[0] is the file's name.
+    symbol = argv[0]
+    argv = argv[1:]
+    # extracts the symbol and creates a new argv with only user and password
+
 
     try:
-        opts, args = getopt.getopt(argv, "s:u:p:") #falta a:
+        opts, args = getopt.getopt(argv, "u:p:") #falta a:
         # converts the params list in a list of tuples
     except getopt.GetoptError as err:
-        print("""Failed to run. Use: python init.py -s <symbol> -u <user> -p <password>
+        print("""Failed to run. Use:
+python init.py <symbol> -u <user> -p <password>
 Put your params in quotes if they have a special character.""")
         sys.exit()
 
 
     for opt, arg in opts:
-        if opt == "-s":
-            symbol = arg
-        elif opt == "-u":
+        if opt == "-u":
             user = arg
         elif opt == "-p":
             password = arg
-        """elif opt == "-a":
-            account == arg"""
 
-
-    
 
     if login(user, password, account):
 
