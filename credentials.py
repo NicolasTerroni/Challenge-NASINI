@@ -1,5 +1,5 @@
-user= nsterroni5049
+user= "nsterroni5049"
 password= 'ikmauM4&'
-account= REM5049
+account= "REM5049"
 
-python init.py DOSep20 -u nsterroni5049 -p 'ikmauM4&'
+# python init.py DOSep20 -u nsterroni5049 -p 'ikmauM4&'

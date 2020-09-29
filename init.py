@@ -6,15 +6,18 @@ import getopt
 import pdb
 # pyRofex
 import pyRofex
+# credentials
+import credentials
 
-
-
-def login(user, password):
+def login(user, password, account):
     """Tries to login."""
 
     print("Logging in reMarkets..")
     try:
-        pyRofex.initialize(user, password, environment=pyRofex.Environment.REMARKET)
+        pyRofex.initialize(user=user,
+                   password=password,
+                   account=account,
+                   environment=pyRofex.Environment.REMARKET)
     except:
         print("""
 Failed to log in.
@@ -64,7 +67,7 @@ def get_bid(md):
     return bid
 
 
-def send_buy_order(symbol ,buy_order_price):
+def send_buy_order(symbol ,buy_order_price, account):
     """Sends a buy order to the market"""
     print(f"Sending a buy order at: ${buy_order_price}")
 
@@ -74,6 +77,7 @@ def send_buy_order(symbol ,buy_order_price):
                         side=pyRofex.Side.BUY,
                         size=1,
                         price=buy_order_price,
+                        account= account,
                         order_type=pyRofex.OrderType.LIMIT)
     except:
         print("Could not send the buy order. Check if the account is correct.")
@@ -90,6 +94,8 @@ def logout():
 def run():
     user = None
     password = None
+    account = credentials.account
+    
 
     argv = sys.argv[1:]
     symbol = argv[0]
@@ -97,7 +103,7 @@ def run():
     # extracts the symbol and creates a new argv with only user and password
 
     try:
-        opts, args = getopt.getopt(argv, "u:p:")
+        opts, args = getopt.getopt(argv, "u:p:") #falta a:
         # converts the params list in a list of tuples
     except getopt.GetoptError as err:
         print("""Failed to run. Run:
@@ -108,14 +114,15 @@ Put your params in quotes if they have a special character.""")
 
     for opt, arg in opts:
         if opt == "-u":
-            user = str(arg)
+            user = arg
         elif opt == "-p":
-            password = str(arg)
+            password = arg
+        
 
     pdb.set_trace()
 
 
-    if login(user, password):
+    if login(user, password, account):
 
         md = get_marketdata(symbol)
 
@@ -135,7 +142,7 @@ Put your params in quotes if they have a special character.""")
                 buy_order_price = (bid-0.01)
 
             # BUY ORDER
-            order = send_buy_order(symbol, buy_order_price)
+            order = send_buy_order(symbol, buy_order_price, account)
             pdb.set_trace()
 
             logout()
