@@ -6,8 +6,7 @@ import getopt
 import pdb
 # pyRofex
 import pyRofex
-# credentials
-import credentials
+
 
 def login(user, password, account):
     """Tries to login."""
@@ -22,7 +21,7 @@ def login(user, password, account):
         print("""
 Failed to log in.
 Checkout your parameters and run:
-python init.py <symbol> -u <user> -p <password>
+python init.py <symbol> -u <user> -p <password> -a <account>
 Put your params in quotes if they have a special character.
 """)
         return False
@@ -71,17 +70,14 @@ def send_buy_order(symbol ,buy_order_price, account):
     """Sends a buy order to the market"""
     print(f"Sending a buy order at: ${buy_order_price}")
 
-    try:
-        order = pyRofex.send_order(
+
+    order = pyRofex.send_order(
                         ticker=symbol,
                         side=pyRofex.Side.BUY,
                         size=1,
                         price=buy_order_price,
                         account= account,
                         order_type=pyRofex.OrderType.LIMIT)
-    except:
-        print("Could not send the buy order. Check if the account is correct.")
-        return
 
     return order
 
@@ -92,9 +88,9 @@ def logout():
 
 
 def run():
+    account = None
     user = None
     password = None
-    account = credentials.account
     
 
     argv = sys.argv[1:]
@@ -103,24 +99,22 @@ def run():
     # extracts the symbol and creates a new argv with only user and password
 
     try:
-        opts, args = getopt.getopt(argv, "u:p:") #falta a:
+        opts, args = getopt.getopt(argv, "u:p:a:")
         # converts the params list in a list of tuples
     except getopt.GetoptError as err:
         print("""Failed to run. Run:
-python init.py <symbol> -u <user> -p <password>
+python init.py <symbol> -u <user> -p <password> -a <account>
 Put your params in quotes if they have a special character.""")
         sys.exit()
 
 
     for opt, arg in opts:
-        if opt == "-u":
+        if opt == "-a":
+            account = arg
+        elif opt == "-u":
             user = arg
         elif opt == "-p":
             password = arg
-        
-
-    pdb.set_trace()
-
 
     if login(user, password, account):
 
@@ -143,8 +137,14 @@ Put your params in quotes if they have a special character.""")
 
             # BUY ORDER
             order = send_buy_order(symbol, buy_order_price, account)
-            pdb.set_trace()
 
+            if order["status"] == "ERROR":
+                error_description = order["description"]
+                print(f"Could not send the buy order: {error_description}")
+            elif order["status"] == "OK":
+                clientId = order["order"]["clientId"]
+                print(f"Operation completed. Client ID: {clientId}")
+            
             logout()
 
         else:
