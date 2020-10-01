@@ -4,43 +4,9 @@
 import sys
 import getopt
 import pdb
+import time
 # pyRofex
 import pyRofex
-
-
-def login(user, password, account):
-    """Tries to login."""
-
-    print("Logging in reMarkets..")
-    try:
-        pyRofex.initialize(user=user,
-                   password=password,
-                   account=account,
-                   environment=pyRofex.Environment.REMARKET)
-    except:
-        print("""
-Failed to log in.
-Checkout your parameters and run:
-python init.py <symbol> -u <user> -p <password> -a <account>
-Put your params in quotes if they have a special character.
-""")
-        return False
-    print(f"Logged in as: {user}")
-    return True
-
-
-def get_marketdata(symbol):
-    """Gets the market data of an instrument"""
-
-    print(f"Getting MarketData from '{str(symbol)}'")
-
-    md = pyRofex.get_market_data(
-        ticker = symbol, 
-        entries = [
-            pyRofex.MarketDataEntry.BIDS, 
-            pyRofex.MarketDataEntry.LAST])
-
-    return md
 
 
 def get_last_price(md):
@@ -66,35 +32,93 @@ def get_bid(md):
     return bid
 
 
-def send_buy_order(symbol ,buy_order_price, account):
-    """Sends a buy order to the market"""
-    print(f"Sending a buy order at: ${buy_order_price}")
-
-
-    order = pyRofex.send_order(
-                        ticker=symbol,
-                        side=pyRofex.Side.BUY,
-                        size=1,
-                        price=buy_order_price,
-                        account= account,
-                        order_type=pyRofex.OrderType.LIMIT)
-
-    return order
-
-
 def logout():
+    """Close the websocket connection and the app execution."""
+
     print("Loggin out reMarkets.")
+    time.sleep(1)
+    pyRofex.close_websocket_connection()
     sys.exit()
 
+
+def login(user, password, account):
+    """Tries to login to the enviroment."""
+
+    print("Logging in reMarkets..")
+
+    try:
+        pyRofex.initialize(
+            user=user,
+            password=password,
+            account=account,
+            environment=pyRofex.Environment.REMARKET)
+    except:
+        print("""Failed to log in. Run:
+        python init.py <symbol> -u <user> -p <password> -a <account>
+        Put your params in quotes if they have a special character.""")
+        sys.exit()
+    
+    print(f"Logged in as: {user}")
+
+
+def market_data_handler(md):
+    global symbol
+    global account
+
+    # LP
+    last_price = get_last_price(md)
+    print(f"Last price: {last_price}")
+
+    # BID
+    bid = get_bid(md)
+    if bid == None:
+        print("No active BIDs.")
+        buy_order_price = 75.25
+    else:
+        print(f"BID price: {bid}")
+        buy_order_price = (bid-0.01)
+        
+    time.sleep(3)
+
+    # ORDER
+    pyRofex.send_order(
+        ticker=symbol,
+        side=pyRofex.Side.BUY,
+        size=1,
+        price=buy_order_price,
+        account= account,
+        order_type=pyRofex.OrderType.LIMIT)
+
+
+    logout()
+
+
+def order_report_handler(order):
+    time.sleep(2)
+    print(f"Sending a buy order at: {order['orderReport']['price']}")
+
+    print(f"Symbol: '{order['orderReport']['instrumentId']['symbol']}'")
+    print(f"Timestamp: {order['timestamp']}")
+    print(f"{order['orderReport']['text']}")
+    print("")
+    logout()
+
+
+def error_handler(message):
+    print(f"Error Message Received: {message}")
+
+
+def exception_handler(exception):
+    print(f"Exception Occurred: {exception}")
+    
 
 def run():
     account = None
     user = None
     password = None
     
-
     argv = sys.argv[1:]
-    symbol = argv[0]
+    symbol = [argv[0],]
     argv = argv[1:]
     # extracts the symbol and creates a new argv with only user and password
 
@@ -103,8 +127,8 @@ def run():
         # converts the params list in a list of tuples
     except getopt.GetoptError as err:
         print("""Failed to run. Run:
-python init.py <symbol> -u <user> -p <password> -a <account>
-Put your params in quotes if they have a special character.""")
+        python init.py <symbol> -u <user> -p <password> -a <account>
+        Put your params in quotes if they have a special character.""")
         sys.exit()
 
 
@@ -116,44 +140,29 @@ Put your params in quotes if they have a special character.""")
         elif opt == "-p":
             password = arg
 
-    if login(user, password, account):
 
-        md = get_marketdata(symbol)
+    login(user, password, account)
 
-        if md["status"] == "OK":
 
-            # LP
-            last_price = get_last_price(md)
-            print(f"Last price: {last_price}")
+    pyRofex.init_websocket_connection(
+        order_report_handler=order_report_handler,
+        market_data_handler=market_data_handler,
+        error_handler=error_handler,
+        exception_handler=exception_handler
+        )
 
-            # BID
-            bid = get_bid(md)
-            if bid == None:
-                print("No active BIDs.")
-                buy_order_price = 75.25
-            else:
-                print(f"BID price: {bid}")
-                buy_order_price = (bid-0.01)
 
-            # BUY ORDER
-            order = send_buy_order(symbol, buy_order_price, account)
+    # SUBSCRIPTIONS
+    pyRofex.market_data_subscription(
+        symbol, 
+        [pyRofex.MarketDataEntry.LAST,
+        pyRofex.MarketDataEntry.BIDS]
+        )
 
-            if order["status"] == "ERROR":
-                error_description = order["description"]
-                print(f"Could not send the buy order: {error_description}")
-            elif order["status"] == "OK":
-                clientId = order["order"]["clientId"]
-                print(f"Operation completed. Client ID: {clientId}")
-            
-            logout()
+    time.sleep(2)
 
-        else:
-            print("Invalid symbol.")
-            logout()
-
-    else:
-        print("Closing.")
-
+    pyRofex.order_report_subscription()
+    
 
 if __name__ == "__main__":
     run()
